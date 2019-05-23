@@ -18,5 +18,11 @@
 \section{相关工作}
 \label{sec:related}
 
-\subsection{Tensorflow}
-    深度学习应用通常运行在深度学习框架上，
+\subsection{TensorFlow}
+    TensorFlow是一个端到端的开源机器学习平台。用户在已经配置好的tensorFlow平台上，可以定义模型并运行，不需要过多的考虑硬件设备。TensorFlow的模型主要分为两部分，数据以及运算，数据以张量（tensor）的形式保存，运算以数据流图(data flow graph)的形式进行组织，TensorFlow在运行过程中，根据硬件设备对数据流图进行调度，并通过stream executor进行执行。
+    
+    用户在使用TensorFlow的时候，只需要定义需要的运算即可，TensorFlow会自动将用户定义的运算转换为Graph（如图所示）。
+    
+\subsection{数据流图}
+
+\section{我们的方法以及贡献}
