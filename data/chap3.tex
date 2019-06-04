@@ -97,6 +97,40 @@
         \label{fig:matmul_cpu_nm_p_rsd}
     \end{figure}
 
-    下面我们来对GPU数据进行建模。我们延续之前的结论，以$ N \times M $和$ P $作为参数。我们发现，GPU数据保持了比较好的正比例关系，相对标准偏差为，因此可以满足我们的预测需求，因此GPU上的性能模型也使用$ N \times M $和$ P $作为参数，对性能数据进行线性插值。
+    下面我们来对GPU数据进行建模。首先我们观察以$ N \times M \times P $为参数的数据，如图\ref{fig:matmul_gpu_nmp}所示。我们可以观察到，在$ N \times M \times P $取值较大的时候，性能变化较少，而且很符合正比例函数。但是在取值较小的时候关系不明显，而且变化较大。
+    
+    我们考虑GPU计算矩阵乘法的过程，$ M \times N $代表线程数量，而GPU中线程数量和CPU相比大很多，以我们的实验平台V100为例，V100单卡支持线程数为5120，因此，在$ N \times M \times P $规模不同的时候，性能模型是不同的。
+    
+    \begin{figure}[!htbp]
+        \centering
+        \includegraphics[width=0.8\textwidth]{figures/matmul_gpu_nmp.png}
+        \caption{GPU矩阵乘法的性能数据（参数为$N \times M \times P $）}
+        \label{fig:matmul_gpu_nmp}
+    \end{figure}
+
+    \begin{figure}[!htbp]
+        \centering
+        \includegraphics[width=0.8\textwidth]{figures/matmul_gpu_nmp_rsd.png}
+        \caption{GPU矩阵乘法的相对标准偏差数据（参数为$ N \times M \times P $）}
+        \label{fig:matmul_gpu_nmp_rsd}
+    \end{figure}
+    
+    因为在卷积神经网络中，一般全连接层规模较大，因此我们先考虑大规模的情况。我们把$ N $、$ M $、$ P $规模限制到128以上，性能数据如图\ref{fig:matmul_gpu_nmp_big}所示，我们可以看出，无论是数据的线性程度还是数据的变化范围都有了很大的提升。图\ref{fig:matmul_gpu_nmp_rsd_big}指出，从相对标准偏差值来看，相较图\ref{fig:matmul_gpu_nmp_rsd}，GPU在参数取值较大的时候，进使用$ N \times M \times P $为参数，就可以达到比较好的预测效果了。因此，我们在规模较大的时候，直接使用$ M \times N \times P $为参数，进行线性插值。
+    
+    在规模较小的时候，由于取值数量少，规模小，我们的测试可以较为密集，此时使用$ N $、$ M $、$ P $三个参数进行线性插值，也能得到比较好的预测效果。
+
+    \begin{figure}[!htbp]
+        \centering
+        \includegraphics[width=0.8\textwidth]{figures/matmul_gpu_nmp_big.png}
+        \caption{GPU矩阵乘法的性能数据（参数为$N \times M \times P $，各参数取值128以上）}
+        \label{fig:matmul_gpu_nmp_big}
+    \end{figure}
+
+    \begin{figure}[!htbp]
+        \centering
+        \includegraphics[width=0.8\textwidth]{figures/matmul_gpu_nmp_rsd_big.png}
+        \caption{GPU矩阵乘法的相对标准偏差数据（参数为$ N \times M \times P $，各参数取值128以上）}
+        \label{fig:matmul_gpu_nmp_rsd_big}
+    \end{figure}
 
 \subsection{二维卷积}
