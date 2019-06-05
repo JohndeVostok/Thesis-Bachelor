@@ -122,15 +122,104 @@
     \begin{figure}[!htbp]
         \centering
         \includegraphics[width=0.8\textwidth]{figures/matmul_gpu_nmp_big.png}
-        \caption{GPU矩阵乘法的性能数据（参数为$N \times M \times P $，各参数取值128以上）}
+        \caption{GPU矩阵乘法的性能数据（参数为$N \times M \times P $，$ N $、$ M $、$ P $取值128以上）}
         \label{fig:matmul_gpu_nmp_big}
     \end{figure}
 
     \begin{figure}[!htbp]
         \centering
         \includegraphics[width=0.8\textwidth]{figures/matmul_gpu_nmp_rsd_big.png}
-        \caption{GPU矩阵乘法的相对标准偏差数据（参数为$ N \times M \times P $，各参数取值128以上）}
+        \caption{GPU矩阵乘法的相对标准偏差数据（参数为$ N \times M \times P $，$ N $、$ M $、$ P $取值128以上）}
         \label{fig:matmul_gpu_nmp_rsd_big}
     \end{figure}
 
 \subsection{二维卷积}
+    二维卷积操作的运算包含6个参数，图片数量（$ B $）、图片尺寸（$ W \times H $）、卷积核尺寸（$ W_K \times H_K $）、输入通道数（$ C_{in} $）、输出通道数（$ C_{out} $）、步长（$ W_S \times H_S $）。因此我们针对以上六个参数进行性能测试，得到在CPU和GPU上的性能数据。
+
+    首先考虑CPU的情况，我们使用$ B \times W \times H \times W_K \times W_H \times W_S^{-1} \times H_S^{-1} \times C_{in} \times C_{out} $作为参数，得到性能数据如图\ref{fig:conv_cpu}所示。我们看到，参数取值相同时，数据变化范围较大，不能够直接使用。而我们经过观察，可以看出，性能数据图中隐约显示出4条平行的直线。而数据中取值有4种的参数仅有$ C_{in} $和$ C_{out} $，因此，我们取参数$ B \times W \times H \times W_K \times W_H \times W_S^{-1} \times H_S^{-1} \times C_{in} $和$ B \times W \times H \times W_K \times W_H \times W_S^{-1} \times H_S^{-1} \times C_{out} $。我们发现，当我们仅选$ B \times W \times H \times W_K \times W_H \times W_S^{-1} \times H_S^{-1} \times C_{in}  $为参数时图像变得较为清晰，如图\ref{fig:conv_cpu_fix0}所示。但依然有大量点不符合正比例函数。
+    
+    在二维卷积操作中，如果卷积核仅为一个点，那么二维卷积运算会退化为矩阵和数字的乘法，此时不会调用二维卷积操作的函数，因此，我们去除这类点，得到性能数据如图\ref{fig:conv_cpu_fix1}所示，此时平均相对标准偏差为0.18可以满足我们的需求。
+
+    \begin{figure}[!htbp]
+        \centering
+        \includegraphics[width=0.8\textwidth]{figures/conv_cpu.png}
+        \caption{CPU二维卷积的性能数据（参数为用$ B \times W \times H \times W_K \times W_H \times W_S^{-1} \times H_S^{-1} \times C_{in} \times C_{out} $）}
+        \label{fig:conv_cpu}
+    \end{figure}
+
+    \begin{figure}[!htbp]
+        \centering
+        \includegraphics[width=0.8\textwidth]{figures/conv_cpu_fix0.png}
+        \caption{CPU二维卷积的性能数据（参数为$ B \times W \times H \times W_K \times W_H \times W_S^{-1} \times H_S^{-1} \times C_{in}  $）}
+        \label{fig:conv_cpu_fix0}
+    \end{figure}
+
+    \begin{figure}[!htbp]
+        \centering
+        \includegraphics[width=0.8\textwidth]{figures/conv_cpu_fix1.png}
+        \caption{CPU二维卷积的性能数据（参数为$ B \times W \times H \times W_K \times W_H \times W_S^{-1} \times H_S^{-1} \times C_{in}  $，去除卷积核大小为1的情况）}
+        \label{fig:conv_cpu_fix1}
+    \end{figure}
+
+    在GPU计算的时候，由于Stream Executor会在映射过程中，将二维卷积操作映射成不同的CuDNN函数，如显式、隐式的卷积函数以及添不添加优化等多种情况，因此，在GPU上二维卷积的性能规律不显著，如图\ref{fig:conv_gpu}所示。我们无法降低参数数量，只能对数据直接进行线性插值。
+    
+    \begin{figure}[!htbp]
+        \centering
+        \includegraphics[width=0.8\textwidth]{figures/conv_gpu.png}
+        \caption{GPU二维卷积的性能数据（参数为$ B \times I^2 \times K^2 \times C_{in} \times C_{out} $）}
+        \label{fig:conv_gpu}
+    \end{figure}
+    
+    二维卷积操作梯度求解方面，由于二维卷积的梯度求解操作也是二维卷积操作，因此我们直接套用二维卷积建立的性能模型即可。其中，正向的卷积操作为：
+    
+    $$
+        X_1 = Conv2D(X_0, F_0, S_0)
+    $$
+    
+    其中$ F $为卷积核，$ S $为步长。那么，针对输入的梯度为：
+    
+    $$
+        d_0 = Conv2D(X_1^T, d_1, [1, 1])
+    $$
+    
+    其中$ X_1 $需要根据原先的Stride进行补0操作。那么这步操作实际运算相当于输入为本层输出，卷积核为本层梯度的一个卷积操作。
+    
+    针对卷积核的梯度为：
+    
+    $$
+        dF_0 = Conv2D(d_1, X_0, [1, 1])
+    $$
+
+    这一操作实际运算相当于输入为本层梯度，卷积核为本层输入的一个卷积操作。
+    
+    综上，二维卷积的梯度求解可以转化为二维卷积运算本身，因此不需要额外进行性能建模。
+    
+\subsection{局部响应归一化}
+    局部相应归一化的输入包含一个四维张量，但是在计算中，前三维会被合并为向量，因此输入的前三维作为一个参数传入。因此影响局部相应归一化操作的参数有三个，输入的前三维规模（$ M $）、第四维规模（$ N $）、深度半径（$ R $）。
+    
+    在CPU上，我们以$ M \times N $为参数，这时局部响应归一化的性能数据如图\ref{fig:lrn_cpu}所示，此时的平均相对标准偏差为0.15，满足我们的需求，因此我们对这个结果直接进行插值，作为我们的局部响应归一化函数的性能模型。
+    
+    \begin{figure}[!htbp]
+        \centering
+        \includegraphics[width=0.8\textwidth]{figures/lrn_cpu.png}
+        \caption{CPU局部响应归一化的性能数据（参数为$ M \times N $）}
+        \label{fig:lrn_cpu}
+    \end{figure}
+
+    在GPU上，局部响应归一化函数的性能数据如图\ref{fig:lrn_gpu}所示，此时平均相对标准偏差为0.14，满足我们的需求。
+
+    \begin{figure}[!htbp]
+        \centering
+        \includegraphics[width=0.8\textwidth]{figures/lrn_gpu.png}
+        \caption{GPU局部响应归一化的性能数据（参数为$ M \times N $）}
+        \label{fig:lrn_gpu}
+    \end{figure}
+
+\subsection{数据传输}
+    在使用GPU的情况下，我们还需要考虑CPU和GPU之间的数据传输问题。由于数据传输仅仅发生在模型运行的开始和结束时候，且多轮训练不需要重复进行，因此，我们对数据传输模型进行简化。我们计算传输数据大小，然后除以CPU与GPU之间的双向互联带宽。我们的测试平台GPU为Tesla V100，双向互联带宽为32GB/s。
+
+\subsection{数据修正}
+    之前讨论的性能模型中，都存在不很符合我们预测模型的数据点，对这类数据点，我们采用提前存储的方式进行处理。针对之前测试中离模型相差过远的数据点，我们测试它周围一段距离的数据。测试数据落在这个范围内时，我们使用这一范围内的数据点进行插值，作为最终的预测结果，从而避免之前建立的模型精度不足的情况。
+    
+    另外，由于常用的卷积神经网络中使用的卷积操作规模都比较相似，因此，我们将常用的操作参数也作为特殊节点进行测试，这样在测试的时候，我们就可以更容易地得到准确的性能数据。
+    
