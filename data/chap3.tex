@@ -44,6 +44,7 @@
     性能预测函数的具体预测方法将在下文进行介绍。
 
 \section{性能模型}
+\label{sec:impl_model}
     接下来我将介绍性能模型部分。主要的研究方式是通过不同参数的运行数据拿到操作的基本性能数据，然后对性能数据进行分析建模，得到性能模型。
     
     在CPU上，数据主要通过TensorFlow profiler来获得。TensorFlow profiler可以获得程序运行时数据流图上节点的运行时间，我们可以非常方便的获得节点的运行数据，从而完成建模。
@@ -134,6 +135,7 @@
     \end{figure}
 
 \subsection{二维卷积}
+\label{ssec:impl_conv}
     二维卷积操作的运算包含6个参数，图片数量（$ B $）、图片尺寸（$ W \times H $）、卷积核尺寸（$ W_K \times H_K $）、输入通道数（$ C_{in} $）、输出通道数（$ C_{out} $）、步长（$ W_S \times H_S $）。因此我们针对以上六个参数进行性能测试，得到在CPU和GPU上的性能数据。
 
     首先考虑CPU的情况，我们使用$ B \times W \times H \times W_K \times W_H \times W_S^{-1} \times H_S^{-1} \times C_{in} \times C_{out} $作为参数，得到性能数据如图\ref{fig:conv_cpu}所示。我们看到，参数取值相同时，数据变化范围较大，不能够直接使用。而我们经过观察，可以看出，性能数据图中隐约显示出4条平行的直线。而数据中取值有4种的参数仅有$ C_{in} $和$ C_{out} $，因此，我们取参数$ B \times W \times H \times W_K \times W_H \times W_S^{-1} \times H_S^{-1} \times C_{in} $和$ B \times W \times H \times W_K \times W_H \times W_S^{-1} \times H_S^{-1} \times C_{out} $。我们发现，当我们仅选$ B \times W \times H \times W_K \times W_H \times W_S^{-1} \times H_S^{-1} \times C_{in}  $为参数时图像变得较为清晰，如图\ref{fig:conv_cpu_fix0}所示。但依然有大量点不符合正比例函数。
