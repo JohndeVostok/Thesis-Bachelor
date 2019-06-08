@@ -8,14 +8,14 @@
 }
 
 \begin{cabstract}
-    随着机器学习的快速发展，深度神经网络在计算机视觉、自然语言处理等领域有着广泛的应用，而随着深度神经网络规模越来越大，训练时间越来越长，针对神经网络运行的时间性能预测成为了非常重要的问题。本文基于机器学习框架tensorflow实现了一个神经网络性能预测模型，能够在不运行神经网络的情况下，细粒度地预测不同平台上深度神经网络的运行时间，准确度达到90\%以上，相比tensorflow自带的预测工具，准确度提高了200\%。
+    随着机器学习的快速发展，深度神经网络在计算机视觉、自然语言处理等领域有着广泛的应用。深度神经网络规模越来越大，训练时间越来越长，因此针对神经网络运行的时间性能预测成为了非常重要的问题。本文提出了基于“预测-调度”框架的深度神经网络性能预测模型。通过对深度神经网络结构进行静态分析，预测神经网络的运行时间。平均准确度能达到80\%以上，和TensorFlow自带的预测工具相比，精确度最高能提高100倍以上。
 
 \end{cabstract}
 
-\ckeywords{深度神经网络, 机器学习, 性能预测, tensorflow}
+\ckeywords{深度神经网络, 机器学习, 性能预测}
 
 \begin{eabstract}
-
+    With the rapid development of machine learning, deep neural networks have been widely used in computer vision, natural language processing and other fields. DNNs are getting larger, and training time is getting longer. Therefore, performance prediction for neural network has become a very important issue. We proposes a deep neural network performance prediction model based on the "prediction-scheduling" framework. Predicting the running time of neural networks by static analysis of its structures. The average accuracy can reach more than 80\%. Compared with the prediction tool in TensorFlow, we increase the accuracy by more than 100 times in the best case.
 \end{eabstract}
 
-\ekeywords{DNN, ML, Performance, tensorflow}
+\ekeywords{DNN, ML, Performance}
