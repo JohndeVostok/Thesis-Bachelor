@@ -8,14 +8,26 @@
 }
 
 \begin{cabstract}
-    随着机器学习的快速发展，深度神经网络在计算机视觉、自然语言处理等领域有着广泛的应用。深度神经网络规模越来越大，训练时间越来越长，因此针对神经网络运行的时间性能预测成为了非常重要的问题。本文提出了基于“预测-调度”框架的深度神经网络性能预测模型。通过对深度神经网络结构进行静态分析，预测神经网络的运行时间。平均准确度能达到80\%以上，和TensorFlow自带的预测工具相比，精确度最高能提高100倍以上。
+    随着机器学习的快速发展，深度神经网络在计算机视觉、自然语言处理等领域有着广泛的应用。深度神经网络规模越来越大，训练时间越来越长，需要的计算资源也越来越多。因此，针对神经网络应用使用的计算资源的预算控制、训练过程的配置选择、训练集群的资源分配都成为了迫在眉睫的任务，而这些任务的完成，需要对深度神经网络的运行时间有准确的预测。
+
+    传统的预测方法存在各类问题，集中体现在：对复杂模型的支持不够好，没有考虑操作间的依赖关系。无法支持非线性操作，对资源利用率不足的场景无法预测等方面。
+    
+    针对传统方法的两大问题，本文提出了基于“预测-调度”框架的深度神经网络性能预测模型。通过对深度神经网络结构进行静态分析，预测神经网络的运行时间。模型主要分为性能模型和调度模拟两部分。其中，性能模型部分分别对各个操作的运行时间进行预测。调度模拟模拟数据流图的运行过程，得到操作的执行顺序和并发情况。两者结合得到准确的模型运行时间。
+    
+    和传统预测方法相比，我们的实现能够更好地解决复杂的模型调度过程以及运行过程中资源利用不充分导致的性能预测不准确的问题。我们的模型平均准确度能达到80\%以上，和TensorFlow提供的基于传统预测方式的预测工具相比，我们的模型在最优测试中能提高100倍以上。
 
 \end{cabstract}
 
 \ckeywords{深度神经网络, 机器学习, 性能预测}
 
 \begin{eabstract}
-    With the rapid development of machine learning, deep neural networks have been widely used in computer vision, natural language processing and other fields. DNNs are getting larger, and training time is getting longer. Therefore, performance prediction for neural network has become a very important issue. We proposes a deep neural network performance prediction model based on the "prediction-scheduling" framework. Predicting the running time of neural networks by static analysis of its structures. The average accuracy can reach more than 80\%. Compared with the prediction tool in TensorFlow, we increase the accuracy by more than 100 times in the best case.
+    With the rapid development of machine learning, deep neural networks(DNNs) have been widely used in computer vision, natural language processing and other fields. DNNs are getting larger, and training time is getting longer, more computing resources are needed. Therefore, the budget control of computational resources for DNN applications, the configuration selection of training process and the resource allocation of training cluster are all urgent tasks. The completion of these tasks requires accurate prediction model of the running time of DNN.
+
+    There are various problems with traditional prediction models, which are: the support of complex models is not good enough, and the dependency between operations is not considered. Nonlinear operations cannot be supported, and insufficient resource utilization cannot be predicted.
+
+    Aiming at the two problems of traditional methods, this paper proposes a DNN performance prediction model based on the framework of "prediction - scheduling". The running time of DNN is predicted by static analysis of its structure. The model is divided into two parts: performance model and scheduling simulator. In the performance model section, the running time of each operation is predicted respectively. Scheduling simulator simulates the running process of data flow graph, and obtains the execution order and concurrency of operations. The combination of the two results gives us accurate running time.
+
+    Compared with traditional prediction model, our implementation can better solve the problem of inaccurate performance prediction caused by the complex model and the insufficient utilization of resources. Our model can achieve an average accuracy of more than 80\%, which is more than 100 times better than the prediction tools provided by TensorFlow based on traditional prediction model.
 \end{eabstract}
 
 \ekeywords{DNN, ML, Performance}
